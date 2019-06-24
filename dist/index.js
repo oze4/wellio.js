@@ -1,6 +1,6 @@
 !function(e){"object"==typeof exports?module.exports=e():"function"==typeof define&&define.amd?define(e):"undefined"!=typeof window?window.commonJsModule=e():"undefined"!=typeof global?global.commonJsModule=e():"undefined"!=typeof self&&(self.commonJsModule=e())}(function(){var define,module,exports;module={exports:(exports={})};
 
-// var fs = require('fs');
+var fs = require('fs');
 
 module.exports = {
 	//// For quick testing when a LAS file isn't handy, use returnThing function
@@ -60,9 +60,21 @@ module.exports = {
 		var curve_info_obj = {"MNEM":"","UNIT":"","ERCB CURVE CODE":"","CURVE DESCRIPTION 1":"","CURVE DESCRIPTION 2":""};
 		var param_info_obj = {"MNEM":"","UNIT":"","DATA":"","DESCRIPTION OF MNEMONIC 1":"","DESCRIPTION OF MNEMONIC 2":""};
 		//// The las file is read as a txt file. It will first be split into seperate strings based on "~" character which occurs at the top of each "block"
-		console.log("onelas = ",onelas)
-		var split1 = onelas.split("~");
-		console.log("split1 = ",split1)
+		
+		
+		//console.log("onelas = ",onelas)
+		var split1_stage = onelas.split("~");
+		var split1 = [];
+		
+		split1_stage.forEach(item => {
+			if (item !== "") {
+				split1.push(item);
+			}
+		})
+		
+		//console.log("split1 = ",split1)
+		
+		
 		var vers_str = "";
 		var well_info_str = "";
 		var curve_info_str = "";
@@ -70,15 +82,40 @@ module.exports = {
 		var other = "";
 		var curve_str = "";
 
-		//// As the 'OTHER' block may or may not be present, we have to split by '~' and then look for a substring to make sure we have the right block before we put each into a variable.
+		//// As the 'OTHER' block may or may not be present, we have to split by '~' and then look for a substring to make sure we have the right block before we put each into a variable.		
 		for(i = 0; i < split1.length; i++){
-			if(split1[i].includes("VERSION")){var vers_str = split1[i]}
-			else if (split1[i].includes("WELL INFORMATION")){well_info_str = split1[i]}
-			else if (split1[i].includes("CURVE INFORMATION")){curve_info_str = split1[i]}
-			else if (split1[i].includes("PARAMETER")){param_info_str = split1[i]}
-			else if (split1[i].includes("OTHER")){other = split1[i]}
-			else if (split1[i].includes("A  DEPTH")){curve_str = split1[i]}
-			else{console.log("there is a problem, in wellio.js the las2json() function has to many item in the string array created by splitting on '~'. ")}
+
+			let headerLine = split1[i];
+
+			if(headerLine.includes("VERSION") || headerLine.includes("Version")){
+				console.log('found version')
+				var vers_str = split1[i]
+			}
+			else if (headerLine.includes("WELL INFORMATION") || headerLine.includes("Well Information")){
+				console.log('found well info')
+				well_info_str = split1[i]
+			}
+			else if (headerLine.includes("CURVE INFORMATION") || headerLine.includes("Curve Information")){
+				console.log('found curve info')
+				curve_info_str = split1[i]
+			}
+			else if (headerLine.includes("PARAMETER") || headerLine.includes("Parameter")){
+				console.log('found parameter info')
+				param_info_str = split1[i]
+			}
+			else if (headerLine.includes("OTHER") || headerLine.includes("Other")){
+				console.log('found other')
+				other = split1[i]
+			}
+			else if (headerLine.includes("A  DEPTH") || headerLine.includes("A  Depth")){
+				console.log('found A DEPTH')
+				curve_str = split1[i]
+			}
+			else{				
+				console.log("there is a problem, in wellio.js the las2json() function has to many item in the string array created by splitting on '~'. ")
+				//console.log(split1[i])
+			}
+
 		}
 
 
@@ -152,7 +189,7 @@ module.exports = {
 				lasjson["WELL INFORMATION BLOCK"][well_obj_inst["MNEM"]] = well_obj_inst
 			}
 			else{
-				console.log(" got else ")
+				console.log(" got else - no well info block ")
 			}
 		}
 		//// Working with CURVES second by splitting it by newline into an array,
@@ -166,11 +203,11 @@ module.exports = {
 			curve_names_array = curve_str_array[0].split(" ")
 			var last_curv_name_position = curve_names_array.length - 1;
 			curve_names_array[last_curv_name_position] = curve_names_array[last_curv_name_position].replace("\r","")
-			console.log("0 curve_names_array = ",curve_names_array)
+			//console.log("0 curve_names_array = ",curve_names_array)
 			curve_names_array = curve_names_array.slice(1,curve_names_array.length);
 			for(i = 0; i < curve_names_array.length; i++){
 				if(curve_names_array[i] !== ""){
-					console.log("0.5 curve_names_array[i] = ",curve_names_array[i])
+					//console.log("0.5 curve_names_array[i] = ",curve_names_array[i])
 					curve_names_array_holder.push(curve_names_array[i]);
 					lasjson["CURVES"][curve_names_array[i]] = []
 				}
@@ -181,12 +218,12 @@ module.exports = {
 		for(j = 1; j < curve_str_array.length; j++){
 			var curve_data_line_array = curve_str_array[j].split(" ");
 			var counter_of_curve_names = 0;
-			console.log("curve_data_line_array.length = ",curve_data_line_array.length)
-			console.log("curve_data_line_array = ",curve_data_line_array)
+			//console.log("curve_data_line_array.length = ",curve_data_line_array.length)
+			//console.log("curve_data_line_array = ",curve_data_line_array)
 			var last_curv_data_line_position = curve_data_line_array.length - 1;
-			console.log("curve_data_line_array[last_curv_data_line_position] = ",curve_data_line_array[last_curv_data_line_position])
+			//console.log("curve_data_line_array[last_curv_data_line_position] = ",curve_data_line_array[last_curv_data_line_position])
 			curve_data_line_array[last_curv_data_line_position] = curve_data_line_array[last_curv_data_line_position].replace("\r","")
-			console.log("curve_data_line_array[last_curv_data_line_position] = ",curve_data_line_array[last_curv_data_line_position])
+			//console.log("curve_data_line_array[last_curv_data_line_position] = ",curve_data_line_array[last_curv_data_line_position])
 			for(k = 0; k < curve_data_line_array.length; k++){
 				if(curve_data_line_array[k] !== ""){				
 					lasjson["CURVES"][curve_names_array_holder[counter_of_curve_names]].push(curve_data_line_array[k])
@@ -194,7 +231,7 @@ module.exports = {
 				}
 			}
 		}
-		console.log(" test: lasjson",lasjson);
+		//console.log(" test: lasjson",lasjson);
 		return(lasjson)
 	},
 	
